@@ -38,7 +38,8 @@
       "dist/credentials/SerpApi.credentials.js",
       "dist/credentials/WolframAlphaApi.credentials.js",
       "dist/credentials/XataApi.credentials.js",
-      "dist/credentials/ZepApi.credentials.js"
+      "dist/credentials/ZepApi.credentials.js",
+      "dist/credentials/iGptApi.credentials.js"
     ],
     "nodes": [
       "dist/nodes/vendors/OpenAi/OpenAi.node.js",
@@ -64,6 +65,7 @@
       "dist/nodes/embeddings/EmbeddingsOpenAI/EmbeddingsOpenAi.node.js",
       "dist/nodes/embeddings/EmbeddingsOllama/EmbeddingsOllama.node.js",
       "dist/nodes/llms/LMChatAnthropic/LmChatAnthropic.node.js",
+      "dist/nodes/llms/LmChatiGpt/LmChatiGpt.node.js",
       "dist/nodes/llms/LmChatAzureOpenAi/LmChatAzureOpenAi.node.js",
       "dist/nodes/llms/LmChatAwsBedrock/LmChatAwsBedrock.node.js",
       "dist/nodes/llms/LmChatDeepSeek/LmChatDeepSeek.node.js",
