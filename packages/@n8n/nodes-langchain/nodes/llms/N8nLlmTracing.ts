@@ -108,9 +108,9 @@ export class N8nLlmTracing extends BaseCallbackHandler {
 		const tokenUsage = this.options.tokensUsageParser(output.llmOutput);
 
 		if (output.generations.length > 0) {
-			tokenUsageEstimate.completionTokens = await this.estimateTokensFromGeneration(
-				output.generations,
-			);
+			tokenUsageEstimate.completionTokens = 0; //await this.estimateTokensFromGeneration(
+			//	output.generations,
+			//);
 
 			tokenUsageEstimate.promptTokens = this.promptTokensEstimate;
 			tokenUsageEstimate.totalTokens =
@@ -153,7 +153,7 @@ export class N8nLlmTracing extends BaseCallbackHandler {
 	}
 
 	async handleLLMStart(llm: Serialized, prompts: string[], runId: string) {
-		const estimatedTokens = await this.estimateTokensFromStringList(prompts);
+		const estimatedTokens = 0; //await this.estimateTokensFromStringList(prompts);
 
 		const options = llm.type === 'constructor' ? llm.kwargs : llm;
 		const { index } = this.executionFunctions.addInputData(this.connectionType, [

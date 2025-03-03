@@ -347,17 +347,15 @@ export class LmChatiGpt implements INodeType {
 			reasoning_effort?: 'low' | 'medium' | 'high';
 		} = {};
 		if (options.responseFormat) modelKwargs.response_format = { type: options.responseFormat };
-		//if (options.reasoningEffort && ['low', 'medium', 'high'].includes(options.reasoningEffort))
-		//	modelKwargs.reasoning_effort = options.reasoningEffort;
-
-		//console.log(`Token is ${credentials.apiKey}`);
+		if (options.reasoningEffort && ['low', 'medium', 'high'].includes(options.reasoningEffort))
+			modelKwargs.reasoning_effort = options.reasoningEffort;
 
 		const model = new ChatOpenAI({
 			modelName,
 			...options,
 			//openAIApiKey: credentials.apiKey as string,
-			timeout: options.timeout ?? 30000,
-			maxRetries: options.maxRetries ?? 1,
+			timeout: options.timeout ?? 60000,
+			maxRetries: options.maxRetries ?? 2,
 			configuration,
 			callbacks: [new N8nLlmTracing(this)],
 			modelKwargs,
