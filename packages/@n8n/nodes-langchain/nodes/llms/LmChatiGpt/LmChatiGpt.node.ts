@@ -188,11 +188,6 @@ export class LmChatiGpt implements INodeType {
 						default: 'https://apis-internal.intel.com/generativeaiinference/v3',
 						description: 'Override the default base URL for the API',
 						type: 'string',
-						displayOptions: {
-							hide: {
-								'@version': [{ _cnd: { gte: 1.1 } }],
-							},
-						},
 					},
 					{
 						displayName: 'Frequency Penalty',
@@ -323,6 +318,7 @@ export class LmChatiGpt implements INodeType {
 		const options = this.getNodeParameter('options', itemIndex, {}) as {
 			frequencyPenalty?: number;
 			maxTokens?: number;
+			apiToken: string;
 			maxRetries: number;
 			timeout: number;
 			presencePenalty?: number;
@@ -338,7 +334,7 @@ export class LmChatiGpt implements INodeType {
 		// https://v02.api.js.langchain.com/interfaces/_langchain_openai.ClientOptions.html
 		const configuration: ClientOptions = {};
 		configuration.baseURL = 'https://apis-internal.intel.com/generativeaiinference/v3';
-		configuration.apiKey = credentials.apiKey as string;
+		configuration.apiKey = credentials.sessionToken as string;
 		configuration.httpAgent = proxyAgent;
 
 		// Extra options to send to OpenAI, that are not directly supported by LangChain
@@ -353,7 +349,8 @@ export class LmChatiGpt implements INodeType {
 		const model = new ChatOpenAI({
 			modelName,
 			...options,
-			//openAIApiKey: credentials.apiKey as string,
+			//openAIApiKey: options.apiToken as string || credentials.apiKey as string,
+			//apiKey: options.apiToken,
 			timeout: options.timeout ?? 60000,
 			maxRetries: options.maxRetries ?? 2,
 			configuration,
