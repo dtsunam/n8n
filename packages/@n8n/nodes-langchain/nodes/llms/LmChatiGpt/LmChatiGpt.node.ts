@@ -3,6 +3,8 @@
 import { ChatOpenAI, type ClientOptions } from '@langchain/openai';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 
+import fetch from 'node-fetch';
+
 import {
 	NodeConnectionType,
 	type INodeType,
@@ -331,10 +333,32 @@ export class LmChatiGpt implements INodeType {
 		// proxy
 		const proxyAgent = new HttpsProxyAgent('http://proxy-chain.intel.com:912');
 
+		// get the token
+
+		const formFields = {
+			grant_type: 'client_credentials',
+			client_id: credentials.clientId as string,
+			client_secret: credentials.clientSecret as string,
+		};
+
+		const response = await fetch(credentials.tokenUrl as string, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/x-www-form-urlencoded',
+			},
+			body: new URLSearchParams(formFields).toString(),
+			agent: proxyAgent,
+		});
+		if (!response.ok) {
+			throw new Error(`HTTP error! status: ${response.status}`);
+		}
+		const data = await response.json();
+		console.log(`token response status ${response.status}`);
+
 		// https://v02.api.js.langchain.com/interfaces/_langchain_openai.ClientOptions.html
 		const configuration: ClientOptions = {};
 		configuration.baseURL = 'https://apis-internal.intel.com/generativeaiinference/v3';
-		configuration.apiKey = credentials.sessionToken as string;
+		configuration.apiKey = data['access_token'] as string;
 		configuration.httpAgent = proxyAgent;
 
 		// Extra options to send to OpenAI, that are not directly supported by LangChain
