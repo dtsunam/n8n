@@ -219,14 +219,12 @@ export class EmbeddingsiGpt implements INodeType {
 		configuration.apiKey = data['access_token'] as string;
 		configuration.httpAgent = proxyAgent;
 
-		const embeddings = new OpenAIEmbeddings(
-			{
-				modelName: this.getNodeParameter('model', itemIndex, 'text-embedding-3-small') as string,
-				...options,
-				//openAIApiKey: credentials.apiKey as string,
-			},
+		const embeddings = new OpenAIEmbeddings({
+			modelName: this.getNodeParameter('model', itemIndex, 'text-embedding-3-small') as string,
+			...options,
+			//openAIApiKey: credentials.apiKey as string,
 			configuration,
-		);
+		});
 
 		return {
 			response: logWrapper(embeddings, this),
