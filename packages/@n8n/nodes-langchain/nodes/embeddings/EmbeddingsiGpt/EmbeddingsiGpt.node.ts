@@ -22,45 +22,18 @@ const modelParameter: INodeProperties = {
 	type: 'options',
 	description:
 		'The model which will generate the embeddings. <a href="https://platform.openai.com/docs/models/overview">Learn more</a>.',
-	typeOptions: {
-		loadOptions: {
-			routing: {
-				request: {
-					method: 'GET',
-					url: '={{ $parameter.options?.baseURL?.split("/").slice(-1).pop() || $credentials?.url?.split("/").slice(-1).pop() || "v1" }}/models',
-				},
-				output: {
-					postReceive: [
-						{
-							type: 'rootProperty',
-							properties: {
-								property: 'data',
-							},
-						},
-						{
-							type: 'filter',
-							properties: {
-								pass: "={{ $responseItem.id.includes('embed') }}",
-							},
-						},
-						{
-							type: 'setKeyValue',
-							properties: {
-								name: '={{$responseItem.id}}',
-								value: '={{$responseItem.id}}',
-							},
-						},
-						{
-							type: 'sort',
-							properties: {
-								key: 'name',
-							},
-						},
-					],
-				},
-			},
+	options: [
+		{
+			name: 'Large',
+			value: 'text-embedding-3-large',
+			description: '3072 dim,',
 		},
-	},
+		{
+			name: 'Small',
+			value: 'text-embedding-3-small',
+			description: '1576 dim',
+		},
+	],
 	routing: {
 		send: {
 			type: 'body',
