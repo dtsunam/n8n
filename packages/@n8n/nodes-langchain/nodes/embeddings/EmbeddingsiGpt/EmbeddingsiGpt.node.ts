@@ -195,6 +195,10 @@ export class EmbeddingsiGpt implements INodeType {
 			dimensions?: number | undefined;
 		};
 
+		if (options.timeout === -1) {
+			options.timeout = undefined;
+		}
+
 		// get the token
 		const formFields = {
 			grant_type: 'client_credentials',
@@ -213,24 +217,22 @@ export class EmbeddingsiGpt implements INodeType {
 		if (!response.ok) {
 			throw new Error(`HTTP error! status: ${response.status}`);
 		}
-		const data = await response.json();
+		const auth_data = await response.json();
 		//console.log(`embeddding token response status ${response.status}`);
 
 		// https://v02.api.js.langchain.com/interfaces/_langchain_openai.ClientOptions.html
 		const configuration: ClientOptions = {};
-		const cfg: ClientOptions = {};
 		configuration.baseURL = 'https://apis-internal.intel.com/generativeaiembedding/v1';
 		//configuration.apiKey = data['access_token'] as string;
 		configuration.httpAgent = proxyAgent;
 
 		const embeddings = new OpenAIEmbeddings(
 			{
-				modelName: this.getNodeParameter('model', itemIndex, 'text-embedding-3-small') as string,
+				modelName: 'text-embedding-3-large' as string,
+				openAIApiKey: auth_data['access_token'] as string,
 				...options,
-				openAIApiKey: data['access_token'] as string,
-				configuration,
 			},
-			cfg,
+			configuration,
 		);
 
 		return {
