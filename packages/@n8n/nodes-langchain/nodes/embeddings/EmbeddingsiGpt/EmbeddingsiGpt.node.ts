@@ -211,7 +211,7 @@ export class EmbeddingsiGpt implements INodeType {
 			throw new Error(`HTTP error! status: ${response.status}`);
 		}
 		const data = await response.json();
-		console.log(`token response status ${response.status}`);
+		console.log(`embeddding token response status ${response.status}`);
 
 		// https://v02.api.js.langchain.com/interfaces/_langchain_openai.ClientOptions.html
 		const configuration: ClientOptions = {};
