@@ -215,16 +215,20 @@ export class EmbeddingsiGpt implements INodeType {
 
 		// https://v02.api.js.langchain.com/interfaces/_langchain_openai.ClientOptions.html
 		const configuration: ClientOptions = {};
+		const cfg: ClientOptions = {};
 		configuration.baseURL = 'https://apis-internal.intel.com/generativeaiembedding/v1';
-		configuration.apiKey = data['access_token'] as string;
+		//configuration.apiKey = data['access_token'] as string;
 		configuration.httpAgent = proxyAgent;
 
-		const embeddings = new OpenAIEmbeddings({
-			modelName: this.getNodeParameter('model', itemIndex, 'text-embedding-3-small') as string,
-			...options,
-			//openAIApiKey: credentials.apiKey as string,
-			configuration,
-		});
+		const embeddings = new OpenAIEmbeddings(
+			{
+				modelName: this.getNodeParameter('model', itemIndex, 'text-embedding-3-small') as string,
+				...options,
+				openAIApiKey: data['access_token'] as string,
+				configuration,
+			},
+			cfg,
+		);
 
 		return {
 			response: logWrapper(embeddings, this),
