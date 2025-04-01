@@ -1,8 +1,8 @@
 /* eslint-disable n8n-nodes-base/node-dirname-against-convention */
 import { OpenAIEmbeddings } from '@langchain/openai';
 import { HttpsProxyAgent } from 'https-proxy-agent';
-
 import fetch from 'node-fetch';
+
 import {
 	NodeConnectionTypes,
 	type INodeType,
@@ -15,6 +15,8 @@ import type { ClientOptions } from 'openai';
 
 import { logWrapper } from '@utils/logWrapper';
 import { getConnectionHintNoticeField } from '@utils/sharedFields';
+// proxy
+const proxyAgent = new HttpsProxyAgent('http://proxy-chain.intel.com:912');
 
 const modelParameter: INodeProperties = {
 	displayName: 'Model',
@@ -24,13 +26,18 @@ const modelParameter: INodeProperties = {
 		'The model which will generate the embeddings. <a href="https://platform.openai.com/docs/models/overview">Learn more</a>.',
 	options: [
 		{
-			name: 'Large',
+			name: 'text-embedding-3-large',
 			value: 'text-embedding-3-large',
 			description: '3072 dim,',
 		},
 		{
-			name: 'Small',
+			name: 'text-embedding-3-small',
 			value: 'text-embedding-3-small',
+			description: '1576 dim',
+		},
+		{
+			name: 'text-embedding-ada-002',
+			value: 'text-embedding-ada-002',
 			description: '1576 dim',
 		},
 	],
@@ -188,11 +195,7 @@ export class EmbeddingsiGpt implements INodeType {
 			dimensions?: number | undefined;
 		};
 
-		// proxy
-		const proxyAgent = new HttpsProxyAgent('http://proxy-chain.intel.com:912');
-
 		// get the token
-
 		const formFields = {
 			grant_type: 'client_credentials',
 			client_id: credentials.clientId as string,
@@ -211,7 +214,7 @@ export class EmbeddingsiGpt implements INodeType {
 			throw new Error(`HTTP error! status: ${response.status}`);
 		}
 		const data = await response.json();
-		console.log(`embeddding token response status ${response.status}`);
+		//console.log(`embeddding token response status ${response.status}`);
 
 		// https://v02.api.js.langchain.com/interfaces/_langchain_openai.ClientOptions.html
 		const configuration: ClientOptions = {};
