@@ -54,6 +54,7 @@ export class PythonSandbox extends Sandbox {
 
 	private async runCodeInPython<T>() {
 		const packageCacheDir = this.helpers.getStoragePath();
+		console.log(`packageCacheDir ${packageCacheDir}`);
 		const pyodide = await LoadPyodide(packageCacheDir);
 
 		let executionResult;

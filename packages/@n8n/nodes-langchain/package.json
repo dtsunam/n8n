@@ -65,6 +65,7 @@
       "dist/nodes/embeddings/EmbeddingsHuggingFaceInference/EmbeddingsHuggingFaceInference.node.js",
       "dist/nodes/embeddings/EmbeddingsMistralCloud/EmbeddingsMistralCloud.node.js",
       "dist/nodes/embeddings/EmbeddingsOpenAI/EmbeddingsOpenAi.node.js",
+      "dist/nodes/embeddings/EmbeddingsiGpt/EmbeddingsiGpt.node.js",
       "dist/nodes/embeddings/EmbeddingsOllama/EmbeddingsOllama.node.js",
       "dist/nodes/llms/LMChatAnthropic/LmChatAnthropic.node.js",
       "dist/nodes/llms/LmChatiGpt/LmChatiGpt.node.js",
