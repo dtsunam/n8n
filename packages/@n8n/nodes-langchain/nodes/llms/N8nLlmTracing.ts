@@ -146,7 +146,7 @@ export class N8nLlmTracing extends BaseCallbackHandler {
 			[{ json: { ...response } }],
 		]);
 
-		console.log('logging the ai event!!!');
+		// console.log('logging the ai event!!!');
 		logAiEvent(this.executionFunctions, 'ai-llm-generated-output', {
 			messages: parsedMessages,
 			options: runDetails.options,
