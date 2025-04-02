@@ -94,6 +94,7 @@ export class N8nLlmTracing extends BaseCallbackHandler {
 	async handleLLMEnd(output: LLMResult, runId: string) {
 		// The fallback should never happen since handleLLMStart should always set the run details
 		// but just in case, we set the index to the length of the runsMap
+		//console.log("Entering the handlellmend calback");
 		const runDetails = this.runsMap[runId] ?? { index: Object.keys(this.runsMap).length };
 
 		output.generations = output.generations.map((gen) =>
@@ -145,6 +146,7 @@ export class N8nLlmTracing extends BaseCallbackHandler {
 			[{ json: { ...response } }],
 		]);
 
+		console.log('logging the ai event!!!');
 		logAiEvent(this.executionFunctions, 'ai-llm-generated-output', {
 			messages: parsedMessages,
 			options: runDetails.options,
