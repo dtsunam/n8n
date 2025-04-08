@@ -4,7 +4,7 @@ import type { BaseLLM } from '@langchain/core/language_models/llms';
 import type { BaseMessage } from '@langchain/core/messages';
 import type { Tool } from '@langchain/core/tools';
 import type { BaseChatMemory } from 'langchain/memory';
-import { NodeConnectionTypes, NodeOperationError, jsonStringify } from 'n8n-workflow';
+import { NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 import type {
 	AiEvent,
 	IDataObject,
@@ -139,13 +139,24 @@ export function getSessionId(
 	return sessionId;
 }
 
+const stringifyCircularJSON = (obj: IDataObject) => {
+	const seen = new WeakSet();
+	return JSON.stringify(obj, (_key, value) => {
+		if (value !== null && typeof value === 'object') {
+			if (seen.has(value)) return;
+			seen.add(value);
+		}
+		return value;
+	});
+};
+
 export function logAiEvent(
 	executeFunctions: IExecuteFunctions | ISupplyDataFunctions,
 	event: AiEvent,
 	data?: IDataObject,
 ) {
 	try {
-		executeFunctions.logAiEvent(event, data ? jsonStringify(data) : undefined);
+		executeFunctions.logAiEvent(event, data ? stringifyCircularJSON(data) : undefined);
 	} catch (error) {
 		executeFunctions.logger.debug(`Error logging AI event: ${event}`);
 	}

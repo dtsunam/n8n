@@ -11,6 +11,7 @@
     "prepare": "node scripts/prepare.mjs",
     "preinstall": "node scripts/block-npm-install.js",
     "build": "turbo run build",
+    "build:langchain": "turbo run build:langchain",
     "build:backend": "turbo run build:backend",
     "build:frontend": "turbo run build:frontend",
     "build:nodes": "turbo run build:nodes",
