@@ -22,8 +22,7 @@ const modelParameter: INodeProperties = {
 	displayName: 'Model',
 	name: 'model',
 	type: 'options',
-	description:
-		'The model which will generate the embeddings. <a href="https://platform.openai.com/docs/models/overview">Learn more</a>.',
+	description: 'The model which will generate the embeddings.',
 	options: [
 		{
 			name: 'text-embedding-3-large',

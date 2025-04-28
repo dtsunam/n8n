@@ -68,7 +68,7 @@ export class LmChatiGpt implements INodeType {
 		],
 		requestDefaults: {
 			ignoreHttpStatusErrors: true,
-			baseURL: 'https://apis-internal.intel.com/generativeaiinference/v3',
+			baseURL: 'https://apis-internal.intel.com/generativeaiinference/v4',
 		},
 		properties: [
 			getConnectionHintNoticeField([NodeConnectionTypes.AiChain, NodeConnectionTypes.AiAgent]),
@@ -190,7 +190,7 @@ export class LmChatiGpt implements INodeType {
 					{
 						displayName: 'Base URL',
 						name: 'baseURL',
-						default: 'https://apis-internal.intel.com/generativeaiinference/v3',
+						default: 'https://apis-internal.intel.com/generativeaiinference/v4',
 						description: 'Override the default base URL for the API',
 						type: 'string',
 					},
@@ -349,6 +349,7 @@ export class LmChatiGpt implements INodeType {
 			agent: proxyAgent,
 		});
 		if (!response.ok) {
+			console.log(`token response status ${response.status}`);
 			throw new Error(`HTTP error! status: ${response.status}`);
 		}
 		const auth_data = await response.json();
@@ -356,7 +357,7 @@ export class LmChatiGpt implements INodeType {
 
 		// https://v02.api.js.langchain.com/interfaces/_langchain_openai.ClientOptions.html
 		const configuration: ClientOptions = {};
-		configuration.baseURL = 'https://apis-internal.intel.com/generativeaiinference/v3';
+		configuration.baseURL = 'https://apis-internal.intel.com/generativeaiinference/v4';
 		configuration.apiKey = auth_data['access_token'] as string;
 		configuration.httpAgent = proxyAgent;
 
