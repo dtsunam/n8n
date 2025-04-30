@@ -115,7 +115,7 @@ export class EmbeddingsiGpt implements INodeType {
 					{
 						displayName: 'Base URL',
 						name: 'baseURL',
-						default: 'https://apis-internal-sandbox.intel.com/generativeaiembedding/v2',
+						default: 'https://apis-internal.intel.com/generativeaiembedding/v2',
 						description: 'Override the default base URL for the API',
 						type: 'string',
 					},
@@ -215,7 +215,7 @@ export class EmbeddingsiGpt implements INodeType {
 
 		// https://v02.api.js.langchain.com/interfaces/_langchain_openai.ClientOptions.html
 		const configuration: ClientOptions = {};
-		configuration.baseURL = 'https://apis-internal-sandbox.intel.com/generativeaiembedding/v2';
+		configuration.baseURL = 'https://apis-internal.intel.com/generativeaiembedding/v2';
 		if (options.baseURL) {
 			configuration.baseURL = options.baseURL;
 		}
