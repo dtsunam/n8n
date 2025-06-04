@@ -1,3 +1,4 @@
+import { Logger } from '@n8n/backend-common';
 import { GlobalConfig } from '@n8n/config';
 import { EventDestinationsRepository, ExecutionRepository, WorkflowRepository } from '@n8n/db';
 import { Service } from '@n8n/di';
@@ -7,7 +8,6 @@ import type { DeleteResult } from '@n8n/typeorm';
 import { In } from '@n8n/typeorm';
 import EventEmitter from 'events';
 import uniqby from 'lodash/uniqBy';
-import { Logger } from 'n8n-core';
 import type { MessageEventBusDestinationOptions } from 'n8n-workflow';
 
 import config from '@/config';
@@ -61,7 +61,7 @@ export class MessageEventBus extends EventEmitter {
 		[key: string]: MessageEventBusDestination;
 	} = {};
 
-	private pushIntervalTimer: NodeJS.Timer;
+	private pushIntervalTimer: NodeJS.Timeout;
 
 	constructor(
 		private readonly logger: Logger,

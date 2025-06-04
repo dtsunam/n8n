@@ -1,7 +1,8 @@
+import { Logger } from '@n8n/backend-common';
 import { Service } from '@n8n/di';
 import type { Redis as SingleNodeClient, Cluster as MultiNodeClient } from 'ioredis';
 import debounce from 'lodash/debounce';
-import { InstanceSettings, Logger } from 'n8n-core';
+import { InstanceSettings } from 'n8n-core';
 import { jsonParse } from 'n8n-workflow';
 import type { LogMetadata } from 'n8n-workflow';
 
@@ -38,7 +39,7 @@ export class Subscriber {
 
 		const debouncedHandlerFn = debounce(handlerFn, 300);
 
-		this.client.on('message', (channel: PubSub.Channel, str) => {
+		this.client.on('message', (channel: PubSub.Channel, str: string) => {
 			const msg = this.parseMessage(str, channel);
 			if (!msg) return;
 			if (msg.debounce) debouncedHandlerFn(msg);
