@@ -7,17 +7,17 @@ import fetch from 'node-fetch';
 
 import {
 	NodeConnectionTypes,
+	type INodePropertyOptions,
+	type INodeProperties,
+	type ISupplyDataFunctions,
 	type INodeType,
 	type INodeTypeDescription,
-	type ISupplyDataFunctions,
 	type SupplyData,
 } from 'n8n-workflow';
 
 import { getProxyAgent } from '@utils/httpProxyAgent';
 import { getConnectionHintNoticeField } from '@utils/sharedFields';
 
-import { searchModels } from './methods/loadModels';
-import { openAiFailedAttemptHandler } from '../../vendors/OpenAi/helpers/error-handling';
 import { makeN8nLlmFailedAttemptHandler } from '../n8nLlmFailedAttemptHandler';
 import { N8nLlmTracing } from '../N8nLlmTracing';
 
@@ -25,20 +25,30 @@ import { N8nLlmTracing } from '../N8nLlmTracing';
 const proxyUrl = 'http://proxy-chain.intel.com:912';
 const proxyAgent = new HttpsProxyAgent(proxyUrl);
 
-export class LmChatiGpt implements INodeType {
-	methods = {
-		listSearch: {
-			searchModels,
+const modelField: INodeProperties = {
+	displayName: 'Model',
+	name: 'model',
+	type: 'options',
+	// eslint-disable-next-line n8n-nodes-base/node-param-options-type-unsorted-items
+	options: [
+		{
+			name: 'Claude 4 Sonnet',
+			value: 'claude-sonnet-4',
 		},
-	};
+	],
+	description:
+		'The model which will generate the completion. <a href="https://docs.anthropic.com/claude/docs/models-overview">Learn more</a>.',
+	default: 'claude-sonnet-4',
+};
 
+export class LmChatiGpt implements INodeType {
 	description: INodeTypeDescription = {
-		displayName: 'OpenAI[iGpt] Chat Model',
-		// eslint-disable-next-line n8n-nodes-base/node-class-description-name-miscased
+		displayName: 'iGpt Chat Model',
+
 		name: 'lmChatiGpt',
 		icon: { light: 'file:igpt.svg', dark: 'file:igpt.svg' },
 		group: ['transform'],
-		version: [1, 1.1, 1.2],
+		version: [1, 1.34],
 		description: 'For advanced usage with an AI chain',
 		defaults: {
 			name: 'iGpt Chat Model',
@@ -57,7 +67,9 @@ export class LmChatiGpt implements INodeType {
 				],
 			},
 		},
+
 		inputs: [],
+
 		outputs: [NodeConnectionTypes.AiLanguageModel],
 		outputNames: ['Model'],
 		credentials: [
@@ -66,73 +78,34 @@ export class LmChatiGpt implements INodeType {
 				required: true,
 			},
 		],
-		requestDefaults: {
-			ignoreHttpStatusErrors: true,
-			baseURL: 'https://apis-internal.intel.com/generativeaiinference/v4',
-		},
 		properties: [
-			getConnectionHintNoticeField([NodeConnectionTypes.AiChain, NodeConnectionTypes.AiAgent]),
+			getConnectionHintNoticeField([NodeConnectionTypes.AiChain, NodeConnectionTypes.AiChain]),
 			{
-				displayName:
-					'If using JSON response format, you must include word "json" in the prompt in your chain or agent. Also, make sure to select latest models released post November 2023.',
-				name: 'notice',
-				type: 'notice',
-				default: '',
+				...modelField,
 				displayOptions: {
 					show: {
-						'/options.responseFormat': ['json_object'],
+						'@version': [1],
 					},
 				},
 			},
 			{
-				displayName: 'Model',
-				name: 'model',
-				type: 'options',
-				description:
-					'The model which will generate the completion. <a href="https://beta.openai.com/docs/models/overview">Learn more</a>.',
-				typeOptions: {
-					loadOptions: {
-						routing: {
-							request: {
-								method: 'GET',
-								url: '={{ $parameter.options?.baseURL?.split("/").slice(-1).pop()  }}/chat/completions/info',
-							},
-							output: {
-								postReceive: [
-									{
-										type: 'rootProperty',
-										properties: {
-											property: 'data',
-										},
-									},
-									{
-										type: 'setKeyValue',
-										properties: {
-											name: '={{$responseItem.id}}',
-											value: '={{$responseItem.id}}',
-										},
-									},
-									{
-										type: 'sort',
-										properties: {
-											key: 'name',
-										},
-									},
-								],
-							},
-						},
-					},
-				},
-				routing: {
-					send: {
-						type: 'body',
-						property: 'model',
-					},
-				},
-				default: 'gpt-4o',
+				...modelField,
+				default: 'claude-3-sonnet-20240229',
 				displayOptions: {
-					hide: {
-						'@version': [{ _cnd: { gte: 1.2 } }],
+					show: {
+						'@version': [1.1],
+					},
+				},
+			},
+			{
+				...modelField,
+				default: 'claude-3-5-sonnet-20240620',
+				options: (modelField.options ?? []).filter(
+					(o): o is INodePropertyOptions => 'name' in o && !o.name.toString().startsWith('LEGACY'),
+				),
+				displayOptions: {
+					show: {
+						'@version': [{ _cnd: { lte: 1.2 } }],
 					},
 				},
 			},
@@ -140,7 +113,11 @@ export class LmChatiGpt implements INodeType {
 				displayName: 'Model',
 				name: 'model',
 				type: 'resourceLocator',
-				default: { mode: 'list', value: 'gpt-4o' },
+				default: {
+					mode: 'list',
+					value: 'claude-sonnet-4',
+					cachedResultName: 'Claude 4 Sonnet',
+				},
 				required: true,
 				modes: [
 					{
@@ -157,27 +134,10 @@ export class LmChatiGpt implements INodeType {
 						displayName: 'ID',
 						name: 'id',
 						type: 'string',
-						placeholder: 'gpt-4o',
+						placeholder: 'Claude Sonnet',
 					},
 				],
-				description: 'The model. Choose from the list, or specify an ID.',
-				displayOptions: {
-					hide: {
-						'@version': [{ _cnd: { lte: 1.1 } }],
-					},
-				},
-			},
-			{
-				displayName:
-					'When using non-OpenAI models via "Base URL" override, not all models might be chat-compatible or support other features, like tools calling or JSON response format',
-				name: 'notice',
-				type: 'notice',
-				default: '',
-				displayOptions: {
-					show: {
-						'/options.baseURL': [{ _cnd: { exists: true } }],
-					},
-				},
+				description: 'The model. Choose from the list or ID',
 			},
 			{
 				displayName: 'Options',
@@ -278,8 +238,8 @@ export class LmChatiGpt implements INodeType {
 						],
 						displayOptions: {
 							show: {
-								// reasoning_effort is only available on o1, o1-versioned, or on o3-mini and beyond. Not on o1-mini or other GPT-models.
-								'/model': [{ _cnd: { regex: '(^o1([-\\d]+)?$)|(^o[3-9].*)' } }],
+								// reasoning_effort is only available on o1, o1-versioned, or on o3-mini and beyond, and gpt-5 models. Not on o1-mini or other GPT-models.
+								'/model': [{ _cnd: { regex: '(^o1([-\\d]+)?$)|(^o[3-9].*)|(^gpt-5.*)' } }],
 							},
 						},
 					},
@@ -316,22 +276,54 @@ export class LmChatiGpt implements INodeType {
 
 		const version = this.getNode().typeVersion;
 		const modelName =
-			version >= 1.2
+			version >= 1
 				? (this.getNodeParameter('model.value', itemIndex) as string)
 				: (this.getNodeParameter('model', itemIndex) as string);
 
 		const options = this.getNodeParameter('options', itemIndex, {}) as {
-			frequencyPenalty?: number;
-			maxTokens?: number;
-			apiToken: string;
-			maxRetries: number;
-			timeout: number;
-			presencePenalty?: number;
-			temperature?: number;
+			maxTokensToSample?: number;
+			temperature: number;
+			topK?: number;
 			topP?: number;
-			responseFormat?: 'text' | 'json_object';
-			reasoningEffort?: 'low' | 'medium' | 'high';
+			thinking?: boolean;
+			thinkingBudget?: number;
 		};
+		let invocationKwargs = {};
+
+		const tokensUsageParser = (result: LLMResult) => {
+			const usage = (result?.llmOutput?.usage as {
+				input_tokens: number;
+				output_tokens: number;
+			}) ?? {
+				input_tokens: 0,
+				output_tokens: 0,
+			};
+			return {
+				completionTokens: usage.output_tokens,
+				promptTokens: usage.input_tokens,
+				totalTokens: usage.input_tokens + usage.output_tokens,
+			};
+		};
+
+		if (options.thinking) {
+			invocationKwargs = {
+				thinking: {
+					type: 'enabled',
+					// If thinking is enabled, we need to set a budget.
+					// We fallback to 1024 as that is the minimum
+					budget_tokens: options.thinkingBudget ?? MIN_THINKING_BUDGET,
+				},
+				// The default Langchain max_tokens is -1 (no limit) but Anthropic requires a number
+				// higher than budget_tokens
+				max_tokens: options.maxTokensToSample ?? DEFAULT_MAX_TOKENS,
+				// These need to be unset when thinking is enabled.
+				// Because the invocationKwargs will override the model options
+				// we can pass options to the model and then override them here
+				top_k: undefined,
+				top_p: undefined,
+				temperature: undefined,
+			};
+		}
 
 		// get the token
 		const formFields = {
@@ -339,9 +331,9 @@ export class LmChatiGpt implements INodeType {
 			client_id: credentials.clientId as string,
 			client_secret: credentials.clientSecret as string,
 		};
-		console.log(`token url ${credentials.tokenUrl}`);
-		console.log(`id ${credentials.clientId}`);
-		console.log(`secret ${credentials.clientSecret}`);
+		// console.log(`token url ${credentials.tokenUrl}`);
+		// console.log(`id ${credentials.clientId}`);
+		// console.log(`secret ${credentials.clientSecret}`);
 
 		const response = await fetch(credentials.tokenUrl as string, {
 			method: 'POST',
@@ -364,14 +356,6 @@ export class LmChatiGpt implements INodeType {
 		configuration.apiKey = auth_data['access_token'] as string;
 		//configuration.httpAgent = proxyAgent; only works in langchain v02
 
-		// Extra options to send to OpenAI, that are not directly supported by LangChain
-		const modelKwargs: {
-			response_format?: object;
-			reasoning_effort?: 'low' | 'medium' | 'high';
-		} = {};
-		if (options.responseFormat) modelKwargs.response_format = { type: options.responseFormat };
-		if (options.reasoningEffort && ['low', 'medium', 'high'].includes(options.reasoningEffort))
-			modelKwargs.reasoning_effort = options.reasoningEffort;
 		if (proxyUrl) {
 			configuration.fetchOptions = {
 				dispatcher: getProxyAgent(proxyUrl),
@@ -386,8 +370,8 @@ export class LmChatiGpt implements INodeType {
 			maxRetries: options.maxRetries ?? 2,
 			configuration,
 			callbacks: [new N8nLlmTracing(this)],
-			modelKwargs,
-			onFailedAttempt: makeN8nLlmFailedAttemptHandler(this, openAiFailedAttemptHandler),
+			onFailedAttempt: makeN8nLlmFailedAttemptHandler(this),
+			invocationKwargs,
 		});
 
 		return {
