@@ -224,7 +224,7 @@ export const SLACK_TRIGGER_NODE_TYPE = 'n8n-nodes-base.slackTrigger';
 export const TELEGRAM_TRIGGER_NODE_TYPE = 'n8n-nodes-base.telegramTrigger';
 export const FACEBOOK_LEAD_ADS_TRIGGER_NODE_TYPE = 'n8n-nodes-base.facebookLeadAdsTrigger';
 export const RESPOND_TO_WEBHOOK_NODE_TYPE = 'n8n-nodes-base.respondToWebhook';
-export const DATA_STORE_NODE_TYPE = 'n8n-nodes-base.dataStore';
+export const DATA_STORE_NODE_TYPE = 'n8n-nodes-base.dataTable';
 
 export const CREDENTIAL_ONLY_NODE_PREFIX = 'n8n-creds-base';
 export const CREDENTIAL_ONLY_HTTP_NODE_VERSION = 4.1;
@@ -984,3 +984,10 @@ export const AI_NODES_PACKAGE_NAME = '@n8n/n8n-nodes-langchain';
 export const AI_ASSISTANT_MAX_CONTENT_LENGTH = 100; // in kilobytes
 
 export const RUN_DATA_DEFAULT_PAGE_SIZE = 25;
+
+/**
+ * Performance Optimizations
+ */
+
+export const LOGS_EXECUTION_DATA_THROTTLE_DURATION = 1000;
+export const CANVAS_EXECUTION_DATA_THROTTLE_DURATION = 500;
