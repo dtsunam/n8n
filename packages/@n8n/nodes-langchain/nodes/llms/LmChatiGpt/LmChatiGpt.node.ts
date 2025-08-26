@@ -41,6 +41,8 @@ const modelField: INodeProperties = {
 	default: 'claude-sonnet-4',
 };
 
+const MIN_THINKING_BUDGET = 1024;
+const DEFAULT_MAX_TOKENS = 4096;
 export class LmChatiGpt implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'iGpt Chat Model',
@@ -148,114 +150,39 @@ export class LmChatiGpt implements INodeType {
 				default: {},
 				options: [
 					{
-						displayName: 'Base URL',
-						name: 'baseURL',
-						default: 'https://apis-internal.intel.com/generativeaiinference/v4',
-						description: 'Override the default base URL for the API',
-						type: 'string',
-					},
-					{
-						displayName: 'Frequency Penalty',
-						name: 'frequencyPenalty',
-						default: 0,
-						typeOptions: { maxValue: 2, minValue: -2, numberPrecision: 1 },
-						description:
-							"Positive values penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim",
-						type: 'number',
-					},
-					{
 						displayName: 'Maximum Number of Tokens',
-						name: 'maxTokens',
-						default: -1,
-						description:
-							'The maximum number of tokens to generate in the completion. Most models have a context length of 2048 tokens (except for the newest models, which support 32,768).',
-						type: 'number',
-						typeOptions: {
-							maxValue: 32768,
-						},
-					},
-					{
-						displayName: 'Response Format',
-						name: 'responseFormat',
-						default: 'text',
-						type: 'options',
-						options: [
-							{
-								name: 'Text',
-								value: 'text',
-								description: 'Regular text response',
-							},
-							{
-								name: 'JSON',
-								value: 'json_object',
-								description:
-									'Enables JSON mode, which should guarantee the message the model generates is valid JSON',
-							},
-						],
-					},
-					{
-						displayName: 'Presence Penalty',
-						name: 'presencePenalty',
-						default: 0,
-						typeOptions: { maxValue: 2, minValue: -2, numberPrecision: 1 },
-						description:
-							"Positive values penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics",
+						name: 'maxTokensToSample',
+						default: DEFAULT_MAX_TOKENS,
+						description: 'The maximum number of tokens to generate in the completion',
 						type: 'number',
 					},
 					{
 						displayName: 'Sampling Temperature',
 						name: 'temperature',
 						default: 0.7,
-						typeOptions: { maxValue: 2, minValue: 0, numberPrecision: 1 },
+						typeOptions: { maxValue: 1, minValue: 0, numberPrecision: 1 },
 						description:
 							'Controls randomness: Lowering results in less random completions. As the temperature approaches zero, the model will become deterministic and repetitive.',
 						type: 'number',
-					},
-					{
-						displayName: 'Reasoning Effort',
-						name: 'reasoningEffort',
-						default: 'medium',
-						description:
-							'Controls the amount of reasoning tokens to use. A value of "low" will favor speed and economical token usage, "high" will favor more complete reasoning at the cost of more tokens generated and slower responses.',
-						type: 'options',
-						options: [
-							{
-								name: 'Low',
-								value: 'low',
-								description: 'Favors speed and economical token usage',
-							},
-							{
-								name: 'Medium',
-								value: 'medium',
-								description: 'Balance between speed and reasoning accuracy',
-							},
-							{
-								name: 'High',
-								value: 'high',
-								description:
-									'Favors more complete reasoning at the cost of more tokens generated and slower responses',
-							},
-						],
 						displayOptions: {
-							show: {
-								// reasoning_effort is only available on o1, o1-versioned, or on o3-mini and beyond, and gpt-5 models. Not on o1-mini or other GPT-models.
-								'/model': [{ _cnd: { regex: '(^o1([-\\d]+)?$)|(^o[3-9].*)|(^gpt-5.*)' } }],
+							hide: {
+								thinking: [true],
 							},
 						},
 					},
 					{
-						displayName: 'Timeout',
-						name: 'timeout',
-						default: 60000,
-						description: 'Maximum amount of time a request is allowed to take in milliseconds',
+						displayName: 'Top K',
+						name: 'topK',
+						default: -1,
+						typeOptions: { maxValue: 1, minValue: -1, numberPrecision: 1 },
+						description:
+							'Used to remove "long tail" low probability responses. Defaults to -1, which disables it.',
 						type: 'number',
-					},
-					{
-						displayName: 'Max Retries',
-						name: 'maxRetries',
-						default: 2,
-						description: 'Maximum number of retries to attempt',
-						type: 'number',
+						displayOptions: {
+							hide: {
+								thinking: [true],
+							},
+						},
 					},
 					{
 						displayName: 'Top P',
@@ -265,6 +192,30 @@ export class LmChatiGpt implements INodeType {
 						description:
 							'Controls diversity via nucleus sampling: 0.5 means half of all likelihood-weighted options are considered. We generally recommend altering this or temperature but not both.',
 						type: 'number',
+						displayOptions: {
+							hide: {
+								thinking: [true],
+							},
+						},
+					},
+					{
+						displayName: 'Enable Thinking',
+						name: 'thinking',
+						type: 'boolean',
+						default: false,
+						description: 'Whether to enable thinking mode for the model',
+					},
+					{
+						displayName: 'Thinking Budget (Tokens)',
+						name: 'thinkingBudget',
+						type: 'number',
+						default: MIN_THINKING_BUDGET,
+						description: 'The maximum number of tokens to use for thinking',
+						displayOptions: {
+							show: {
+								thinking: [true],
+							},
+						},
 					},
 				],
 			},
@@ -363,15 +314,14 @@ export class LmChatiGpt implements INodeType {
 		}
 		const model = new ChatOpenAI({
 			modelName,
-			...options,
-			//openAIApiKey: options.apiToken as string || credentials.apiKey as string,
-			//apiKey: options.apiToken,
-			timeout: options.timeout ?? 60000,
-			maxRetries: options.maxRetries ?? 2,
-			configuration,
-			callbacks: [new N8nLlmTracing(this)],
+			maxTokens: options.maxTokensToSample,
+			temperature: options.temperature,
+			topK: options.topK,
+			topP: options.topP,
+			callbacks: [new N8nLlmTracing(this, { tokensUsageParser })],
 			onFailedAttempt: makeN8nLlmFailedAttemptHandler(this),
 			invocationKwargs,
+			configuration,
 		});
 
 		return {
