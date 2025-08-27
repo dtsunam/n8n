@@ -14,9 +14,12 @@ import {
 import type { ClientOptions } from 'openai';
 
 import { logWrapper } from '@utils/logWrapper';
+
+import { getProxyAgent } from '@utils/httpProxyAgent';
 import { getConnectionHintNoticeField } from '@utils/sharedFields';
 // proxy
-const proxyAgent = new HttpsProxyAgent('http://proxy-chain.intel.com:912');
+const proxyUrl = 'http://proxy-chain.intel.com:912';
+const proxyAgent = new HttpsProxyAgent(proxyUrl);
 
 const modelParameter: INodeProperties = {
 	displayName: 'Model',
@@ -37,7 +40,7 @@ const modelParameter: INodeProperties = {
 		{
 			name: 'text-embedding-ada-002',
 			value: 'text-embedding-ada-002',
-			description: '1576 dim',
+			description: '1536 dim',
 		},
 	],
 	routing: {
@@ -52,7 +55,7 @@ const modelParameter: INodeProperties = {
 export class EmbeddingsiGpt implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'Embeddings iGpt',
-		name: 'embeddingsigpt',
+		name: 'embeddingsiGpt',
 		icon: { light: 'file:igpt.svg', dark: 'file:igpt.svg' },
 		credentials: [
 			{
@@ -80,9 +83,7 @@ export class EmbeddingsiGpt implements INodeType {
 				],
 			},
 		},
-		// eslint-disable-next-line n8n-nodes-base/node-class-description-inputs-wrong-regular-node
 		inputs: [],
-		// eslint-disable-next-line n8n-nodes-base/node-class-description-outputs-wrong
 		outputs: [NodeConnectionTypes.AiEmbedding],
 		outputNames: ['Embeddings'],
 		properties: [
@@ -113,13 +114,6 @@ export class EmbeddingsiGpt implements INodeType {
 				default: {},
 				options: [
 					{
-						displayName: 'Base URL',
-						name: 'baseURL',
-						default: 'https://apis-internal.intel.com/generativeaiembedding/v2',
-						description: 'Override the default base URL for the API',
-						type: 'string',
-					},
-					{
 						displayName: 'Dimensions',
 						name: 'dimensions',
 						default: undefined,
@@ -148,6 +142,13 @@ export class EmbeddingsiGpt implements INodeType {
 								value: 3072,
 							},
 						],
+					},
+					{
+						displayName: 'Base URL',
+						name: 'baseURL',
+						default: 'https://apis-internal.intel.com/generativeaiembedding/v2',
+						description: 'Override the default base URL for the API',
+						type: 'string',
 					},
 					{
 						displayName: 'Batch Size',
@@ -199,6 +200,9 @@ export class EmbeddingsiGpt implements INodeType {
 			client_id: credentials.clientId as string,
 			client_secret: credentials.clientSecret as string,
 		};
+		// console.log(`token url ${credentials.tokenUrl}`);
+		// console.log(`id ${credentials.clientId}`);
+		// console.log(`secret ${credentials.clientSecret}`);
 
 		const response = await fetch(credentials.tokenUrl as string, {
 			method: 'POST',
@@ -209,17 +213,24 @@ export class EmbeddingsiGpt implements INodeType {
 			agent: proxyAgent,
 		});
 		if (!response.ok) {
+			console.log(`token response status ${response.status}`);
 			throw new Error(`HTTP error! status: ${response.status}`);
 		}
 		const auth_data = await response.json();
+		//console.log(`token response status ${response.status}`);
 
 		// https://v02.api.js.langchain.com/interfaces/_langchain_openai.ClientOptions.html
 		const configuration: ClientOptions = {};
 		configuration.baseURL = 'https://apis-internal.intel.com/generativeaiembedding/v2';
+		//configuration.httpAgent = proxyAgent;
+		if (proxyUrl) {
+			configuration.fetchOptions = {
+				dispatcher: getProxyAgent(proxyUrl),
+			};
+		}
 		if (options.baseURL) {
 			configuration.baseURL = options.baseURL;
 		}
-		configuration.httpAgent = proxyAgent;
 
 		const embeddings = new OpenAIEmbeddings(
 			{
