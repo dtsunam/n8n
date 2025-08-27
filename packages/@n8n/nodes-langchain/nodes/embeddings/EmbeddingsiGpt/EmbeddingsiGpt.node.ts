@@ -223,23 +223,14 @@ export class EmbeddingsiGpt implements INodeType {
 		const configuration: ClientOptions = {};
 		configuration.baseURL = 'https://apis-internal.intel.com/generativeaiembedding/v2';
 		//configuration.httpAgent = proxyAgent;
-		if (proxyUrl) {
-			configuration.fetchOptions = {
-				dispatcher: getProxyAgent(proxyUrl),
-			};
-		}
-		if (options.baseURL) {
-			configuration.baseURL = options.baseURL;
-		}
+		configuration.fetchOptions = { dispatcher: getProxyAgent(proxyUrl) };
 
-		const embeddings = new OpenAIEmbeddings(
-			{
-				modelName: this.getNodeParameter('model', itemIndex, 'text-embedding-3-large') as string,
-				openAIApiKey: auth_data['access_token'] as string,
-				...options,
-			},
+		const embeddings = new OpenAIEmbeddings({
+			model: this.getNodeParameter('model', itemIndex, 'text-embedding-3-small') as string,
+			openAIApiKey: auth_data['access_token'] as string,
+			...options,
 			configuration,
-		);
+		});
 
 		return {
 			response: logWrapper(embeddings, this),
