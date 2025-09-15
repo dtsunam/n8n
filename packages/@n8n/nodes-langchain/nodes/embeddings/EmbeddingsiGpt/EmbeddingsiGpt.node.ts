@@ -122,14 +122,6 @@ export class EmbeddingsiGpt implements INodeType {
 						type: 'options',
 						options: [
 							{
-								name: '256',
-								value: 256,
-							},
-							{
-								name: '512',
-								value: 512,
-							},
-							{
 								name: '1024',
 								value: 1024,
 							},
@@ -187,7 +179,7 @@ export class EmbeddingsiGpt implements INodeType {
 			batchSize?: number;
 			stripNewLines?: boolean;
 			timeout?: number;
-			dimensions?: number | undefined;
+			dimensions?: number | 1536;
 		};
 
 		if (options.timeout === -1) {
@@ -222,8 +214,24 @@ export class EmbeddingsiGpt implements INodeType {
 		// https://v02.api.js.langchain.com/interfaces/_langchain_openai.ClientOptions.html
 		const configuration: ClientOptions = {};
 		configuration.baseURL = 'https://apis-internal.intel.com/generativeaiembedding/v2';
+		if (options.baseURL) {
+			configuration.baseURL = options.baseURL;
+			console.log(`configuration.baseURL ${configuration.baseURL}`);
+		}
+		if (options.dimensions) {
+			console.log(`options.dimensions ${options.dimensions}`);
+		}
+		if (options.batchSize) {
+			console.log(`options.batchSize ${options.batchSize}`);
+		}
 		//configuration.httpAgent = proxyAgent;
 		configuration.fetchOptions = { dispatcher: getProxyAgent(proxyUrl) };
+
+		//if (configuration.baseURL) {
+		//	configuration.fetchOptions = {
+		//		dispatcher: getProxyAgent(configuration.baseURL ?? 'https://api.openai.com/v1'),
+		//	};
+		//}
 
 		const embeddings = new OpenAIEmbeddings({
 			model: this.getNodeParameter('model', itemIndex, 'text-embedding-3-small') as string,
