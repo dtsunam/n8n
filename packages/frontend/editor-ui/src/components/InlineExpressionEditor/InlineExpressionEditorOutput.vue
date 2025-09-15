@@ -55,7 +55,7 @@ defineExpose({
 		:virtual-triggering="virtualRef !== undefined"
 		:virtual-ref="virtualRef"
 		:width="virtualRefSize.width.value"
-		:popper-class="$style.popper"
+		:popper-class="`${$style.popper} ignore-key-press-canvas`"
 		:popper-options="{
 			modifiers: [
 				{ name: 'flip', enabled: false },
@@ -103,6 +103,10 @@ defineExpose({
 	background-color: transparent !important;
 	padding: 0 !important;
 	border: none !important;
+
+	/* Override styles set for el-popper */
+	word-break: normal;
+	text-align: unset;
 }
 
 .dropdown {
